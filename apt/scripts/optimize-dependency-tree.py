@@ -546,6 +546,15 @@ def resolve_targets(
                 closure_size_memo,
             ).cost,
         )
+
+        existing = resolution.selected.get(package.name)
+        if existing and existing.version != package.version:
+            missing = requirement_text(requirement)
+            resolution.missing.append(
+                missing if parent is None else f"{parent} -> {missing}"
+            )
+            return
+
         if parent is None:
             resolution.roots[requirement.name] = package.name
         if parent:

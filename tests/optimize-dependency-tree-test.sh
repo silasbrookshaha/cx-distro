@@ -228,6 +228,28 @@ Package: tiny-alt
 Version: 1.0
 Installed-Size: 60
 Description: smaller standalone alternative before deduplication
+
+Package: version-conflict-left
+Version: 1.0
+Installed-Size: 1
+Depends: version-conflict-lib (= 1.0)
+Description: root requiring the first incompatible version
+
+Package: version-conflict-right
+Version: 1.0
+Installed-Size: 1
+Depends: version-conflict-lib (= 2.0)
+Description: root requiring the second incompatible version
+
+Package: version-conflict-lib
+Version: 1.0
+Installed-Size: 1
+Description: first mutually exclusive version
+
+Package: version-conflict-lib
+Version: 2.0
+Installed-Size: 1
+Description: second mutually exclusive version
 EOF
 
 gzip -c "$INDEX" > "$GZ_INDEX"
@@ -335,6 +357,13 @@ output="$(run_optimizer marginal-root)"
 assert_contains "$output" "Total Installed-Size: 102 KiB"
 assert_contains "$output" "shared-runtime 1.0"
 assert_not_contains "$output" "tiny-alt 1.0"
+
+if run_optimizer version-conflict-left version-conflict-right > "$TMP_DIR/version-conflict.out" 2>&1; then
+    echo "Expected incompatible package version plan to fail" >&2
+    cat "$TMP_DIR/version-conflict.out" >&2
+    exit 1
+fi
+assert_contains "$(cat "$TMP_DIR/version-conflict.out")" "version-conflict-right -> version-conflict-lib (= 2.0)"
 
 if run_optimizer cx-demo conflict-tool > "$TMP_DIR/conflict.out" 2>&1; then
     echo "Expected conflicting plan to fail" >&2
